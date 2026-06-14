@@ -1,4 +1,3 @@
-// ===== AUTH TYPES =====
 export interface User {
   id: number;
   username: string;
@@ -38,7 +37,6 @@ export interface AuthResponse {
   };
 }
 
-// ===== POST TYPES =====
 export type PostVisibility = "public" | "followers" | "private";
 export type PostType = "post" | "reply" | "quote" | "repost";
 
@@ -66,7 +64,6 @@ export interface Post {
   isLiked?: boolean;
 }
 
-// ===== USER MINI =====
 export interface UserMini {
   id: number;
   username: string;
@@ -80,7 +77,6 @@ export interface SuggestedUser extends UserMini {
   _count: { followers: number };
 }
 
-// ===== COMMENT TYPES =====
 export interface Comment {
   id: number;
   content: string;
@@ -102,7 +98,6 @@ export interface Reply {
   isLiked?: boolean;
 }
 
-// ===== NOTIFICATION TYPES =====
 export type NotificationType = "follow" | "like" | "comment" | "reply";
 
 export interface Notification {
@@ -114,7 +109,6 @@ export interface Notification {
   post?: { id: number; content: string | null } | null;
 }
 
-// ===== MESSAGE TYPES =====
 export interface Message {
   id: number;
   conversationId: number;
@@ -159,14 +153,12 @@ export interface ConversationMember {
   };
 }
 
-// ===== HASHTAG =====
 export interface Hashtag {
   id: number;
   name: string;
   postsCount: number;
 }
 
-// ===== API RESPONSE =====
 export interface ApiResponse<T = unknown> {
   success: boolean;
   message: string;
@@ -182,26 +174,20 @@ export interface PaginatedData<T> {
   hasMore?: boolean;
 }
 
-// ===== SEARCH HISTORY =====
-// Backend mới trả về: { id, createdAt, target: { id, username, fullname, avatarUrl, isVerified } }
-// Backend cũ (search.service.ts gốc) trả về: { id, searchedAt, user: {...} }
-// Hỗ trợ cả hai format
 export interface SearchHistoryItem {
   id: number;
-  // Backend mới dùng createdAt, backend cũ dùng searchedAt
+
   createdAt?: string;
   searchedAt?: string;
-  // Backend mới dùng target, backend cũ dùng user
+
   target?: UserMini;
   user?: UserMini;
 }
 
-// Helper để lấy user từ history item (hỗ trợ cả hai format backend)
 export function getHistoryUser(item: SearchHistoryItem): UserMini | null {
   return item.user ?? item.target ?? null;
 }
 
-// Helper để lấy thời gian từ history item
 export function getHistoryTime(item: SearchHistoryItem): string {
   return item.searchedAt ?? item.createdAt ?? new Date().toISOString();
 }

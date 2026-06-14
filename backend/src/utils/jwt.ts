@@ -25,14 +25,12 @@ export const jwtService = {
     } as SignOptions);
   },
 
-  // Đã sửa: Chuyển thành một method hợp lệ bên trong Object jwtService
   verifyAccessToken(token: string) {
     try {
       const decoded = jwt.verify(token, JWT_SECRET);
       return decoded as TokenPayload; 
     } catch (error) {
       if (error instanceof jwt.TokenExpiredError) {
-        // Trả về object đánh dấu token đã hết hạn thay vì làm sập app
         return { valid: false, expired: true, error: 'Token đã hết hạn' };
       }
       return { valid: false, expired: false, error: 'Token không hợp lệ' };

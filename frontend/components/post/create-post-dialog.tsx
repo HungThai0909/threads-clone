@@ -304,7 +304,6 @@ function _prependToFeed(
     likesCount: 0,
   };
 
-  // Feed cache
   queryClient.setQueryData(QUERY_KEYS.FEED, (old: any) => {
     if (!old?.pages) {
       return {
@@ -322,21 +321,23 @@ function _prependToFeed(
     };
   });
 
-  // ✅ Thêm đoạn này: cập nhật cache USER_POSTS của profile
-  queryClient.setQueryData(QUERY_KEYS.USER_POSTS(currentUser.id), (old: any) => {
-    if (!old?.pages) {
+  queryClient.setQueryData(
+    QUERY_KEYS.USER_POSTS(currentUser.id),
+    (old: any) => {
+      if (!old?.pages) {
+        return {
+          pages: [{ success: true, data: [postToInsert] }],
+          pageParams: [1],
+        };
+      }
       return {
-        pages: [{ success: true, data: [postToInsert] }],
-        pageParams: [1],
+        ...old,
+        pages: old.pages.map((page: any, idx: number) =>
+          idx === 0
+            ? { ...page, data: [postToInsert, ...(page.data ?? [])] }
+            : page,
+        ),
       };
-    }
-    return {
-      ...old,
-      pages: old.pages.map((page: any, idx: number) =>
-        idx === 0
-          ? { ...page, data: [postToInsert, ...(page.data ?? [])] }
-          : page,
-      ),
-    };
-  });
+    },
+  );
 }

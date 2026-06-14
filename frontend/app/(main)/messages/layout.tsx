@@ -15,7 +15,6 @@ import { QUERY_KEYS, API_BASE_URL } from "@/constants";
 import { cn } from "@/lib/utils";
 import type { Conversation } from "@/types";
 
-// Lấy chữ cái đầu viết hoa của username, fallback về fullname rồi "?"
 function getAvatarFallback(conv: any, currentUserId?: number): string {
   const other = conv.members.find((m: any) => m.user.id !== currentUserId);
   if (conv.isGroup) {
@@ -129,14 +128,14 @@ export default function MessagesLayout({
 
   return (
     <div className="flex h-screen pt-0 -mx-4 bg-background">
-      {/* Sidebar chứa danh sách cuộc hội thoại */}
+    
       <div
         className={cn(
           "w-full md:w-[320px] border-r border-border flex flex-col shrink-0 bg-background",
           pathname !== "/messages" && "hidden md:flex",
         )}
       >
-        {/* Header Sidebar - text-foreground đổi chữ "Messages" thành màu đen ở chế độ sáng */}
+      
         <div className="flex items-center justify-between px-4 py-4 border-b border-border">
           <h1 className="text-lg font-bold text-foreground">Messages</h1>
           <button
@@ -147,7 +146,7 @@ export default function MessagesLayout({
           </button>
         </div>
 
-        {/* Vùng danh sách tin nhắn cuộn được */}
+       
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
             <div className="flex justify-center py-10">
@@ -187,7 +186,7 @@ export default function MessagesLayout({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      {/* text-foreground đổi tên user thành màu đen ở chế độ sáng */}
+                    
                       <span className="text-sm font-semibold text-foreground truncate">
                         {getConversationName(conv)}
                       </span>
@@ -223,7 +222,7 @@ export default function MessagesLayout({
         </div>
       </div>
 
-      {/* Vùng hiển thị chi tiết tin nhắn bên phải */}
+    
       <div
         className={cn(
           "flex-1 flex flex-col bg-background",

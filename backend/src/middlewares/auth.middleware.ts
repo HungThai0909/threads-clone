@@ -29,18 +29,13 @@ async function processTokenAndUser(
   if (!token) return { success: false };
 
   try {
-    // Gọi hàm xác thực từ jwtService
     const result = jwtService.verifyAccessToken(token);
-
-    // ĐÃ SỬA: Kiểm tra cấu trúc trả về xem token có lỗi hoặc hết hạn hay không
     if ("valid" in result) {
       if (result.expired) {
         return { success: false, isExpired: true };
       }
       return { success: false };
     }
-
-    // Nếu không lọt vào block trên, TypeScript tự hiểu result chính là TokenPayload hợp lệ
     const payload = result;
     if (!payload || !payload.jti) return { success: false };
 

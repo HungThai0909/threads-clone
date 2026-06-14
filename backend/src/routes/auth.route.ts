@@ -45,9 +45,6 @@ router.post(
   authController.resendVerificationEmail,
 );
 
-// ==========================================
-// Các Routes bắt buộc phải ĐĂNG NHẬP ở dưới này
-// ==========================================
 router.use(authMiddleware);
 
 router.get("/me", authController.getMe);

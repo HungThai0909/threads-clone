@@ -25,7 +25,6 @@ export function useSocket() {
   const queryClient = useQueryClient();
   const socketRef = useRef<Socket | null>(null);
 
-  // Dùng Ref bọc UI State & QueryClient để các hàm callback socket luôn đọc được dữ liệu mới nhất mà không cần re-bind event listeners
   const contextRef = useRef({
     setUnreadNotifications,
     setUnreadMessages,
@@ -42,9 +41,14 @@ export function useSocket() {
       unreadMessages,
       queryClient,
     };
-  }, [setUnreadNotifications, setUnreadMessages, unreadNotifications, unreadMessages, queryClient]);
+  }, [
+    setUnreadNotifications,
+    setUnreadMessages,
+    unreadNotifications,
+    unreadMessages,
+    queryClient,
+  ]);
 
-  // Khởi tạo hoặc ngắt kết nối Socket dựa trên Auth State & Đăng ký sự kiện hệ thống toàn cục
   useEffect(() => {
     if (!isAuthenticated || !accessToken) {
       if (globalSocket) {
@@ -65,7 +69,7 @@ export function useSocket() {
         reconnectionAttempts: 5,
       });
     }
-    
+
     socketRef.current = globalSocket;
     setSocketConnected(globalSocket.connected);
 
@@ -81,11 +85,12 @@ export function useSocket() {
       console.log("[Socket] Disconnected");
     };
 
-    // ─── Đăng ký nhận Event Realtime Core ───
     const handleNewNotification = (notification: any) => {
       const currentUnread = contextRef.current.unreadNotifications;
       contextRef.current.setUnreadNotifications(currentUnread + 1);
-      void contextRef.current.queryClient.invalidateQueries({ queryKey: QUERY_KEYS.NOTIFICATIONS });
+      void contextRef.current.queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.NOTIFICATIONS,
+      });
 
       const typeLabels: Record<string, string> = {
         follow: "started following you",
@@ -103,36 +108,47 @@ export function useSocket() {
       contextRef.current.setUnreadNotifications(unreadCount);
     };
 
-    const handleNewMessage = (message: Message & { conversationId: number }) => {
-      // 1. Luôn làm mới danh sách cuộc hội thoại ở Sidebar để đẩy cuộc trò chuyện lên đầu
-      void contextRef.current.queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CONVERSATIONS });
+    const handleNewMessage = (
+      message: Message & { conversationId: number },
+    ) => {
+      void contextRef.current.queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.CONVERSATIONS,
+      });
 
       if (message?.conversationId) {
         const messagesKey = QUERY_KEYS.MESSAGES(Number(message.conversationId));
-        const existing = contextRef.current.queryClient.getQueryData<any>(messagesKey);
+        const existing =
+          contextRef.current.queryClient.getQueryData<any>(messagesKey);
 
         if (existing?.pages) {
           const alreadyExists = existing.pages.some((page: any) =>
-            (page.data as Message[])?.some((m) => Number(m.id) === Number(message.id)),
+            (page.data as Message[])?.some(
+              (m) => Number(m.id) === Number(message.id),
+            ),
           );
 
           if (!alreadyExists) {
-            contextRef.current.queryClient.setQueryData(messagesKey, (old: any) => {
-              if (!old?.pages) return old;
-              return {
-                ...old,
-                pages: old.pages.map((page: any, idx: number) => {
-                  if (idx !== 0) return page; // Chỉ đẩy tin nhắn mới vào đầu trang đầu tiên
-                  return {
-                    ...page,
-                    data: [message, ...(page.data ?? [])],
-                  };
-                }),
-              };
-            });
+            contextRef.current.queryClient.setQueryData(
+              messagesKey,
+              (old: any) => {
+                if (!old?.pages) return old;
+                return {
+                  ...old,
+                  pages: old.pages.map((page: any, idx: number) => {
+                    if (idx !== 0) return page;
+                    return {
+                      ...page,
+                      data: [message, ...(page.data ?? [])],
+                    };
+                  }),
+                };
+              },
+            );
           }
         } else {
-          void contextRef.current.queryClient.invalidateQueries({ queryKey: messagesKey });
+          void contextRef.current.queryClient.invalidateQueries({
+            queryKey: messagesKey,
+          });
         }
       }
 
@@ -141,10 +157,11 @@ export function useSocket() {
     };
 
     const handleConversationUpdate = () => {
-      void contextRef.current.queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CONVERSATIONS });
+      void contextRef.current.queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.CONVERSATIONS,
+      });
     };
 
-    // Lắng nghe sự kiện
     currentSocket.on("connect", handleConnect);
     currentSocket.on("disconnect", handleDisconnect);
     currentSocket.on("notification:new", handleNewNotification);
@@ -152,7 +169,6 @@ export function useSocket() {
     currentSocket.on("message:new", handleNewMessage);
     currentSocket.on("conversation:update", handleConversationUpdate);
 
-    // Nếu socket đã kết nối từ trước, tự động trigger thủ công trạng thái kết nối
     if (currentSocket.connected) {
       handleConnect();
     }
@@ -167,25 +183,30 @@ export function useSocket() {
     };
   }, [isAuthenticated, accessToken]);
 
-  // ─── Conversation room emitter ───────────────────────────────────────────────
   const joinConversation = useCallback((conversationId: number) => {
-    socketRef.current?.emit("conversation:join", { conversationId: Number(conversationId) });
+    socketRef.current?.emit("conversation:join", {
+      conversationId: Number(conversationId),
+    });
   }, []);
 
   const leaveConversation = useCallback((conversationId: number) => {
-    socketRef.current?.emit("conversation:leave", { conversationId: Number(conversationId) });
+    socketRef.current?.emit("conversation:leave", {
+      conversationId: Number(conversationId),
+    });
   }, []);
 
-  // ─── Typing emitter ──────────────────────────────────────────────────────────
   const emitTypingStart = useCallback((conversationId: number) => {
-    socketRef.current?.emit("typing:start", { conversationId: Number(conversationId) });
+    socketRef.current?.emit("typing:start", {
+      conversationId: Number(conversationId),
+    });
   }, []);
 
   const emitTypingStop = useCallback((conversationId: number) => {
-    socketRef.current?.emit("typing:stop", { conversationId: Number(conversationId) });
+    socketRef.current?.emit("typing:stop", {
+      conversationId: Number(conversationId),
+    });
   }, []);
 
-  // ─── Typing listener ──────────────────────────────────────────────────────────
   const onTyping = useCallback(
     (
       conversationId: number,
@@ -206,7 +227,7 @@ export function useSocket() {
         socket?.off("typing:start", handler);
       };
     },
-    []
+    [],
   );
 
   const onTypingStop = useCallback(
@@ -229,7 +250,7 @@ export function useSocket() {
         socket?.off("typing:stop", handler);
       };
     },
-    []
+    [],
   );
 
   return {

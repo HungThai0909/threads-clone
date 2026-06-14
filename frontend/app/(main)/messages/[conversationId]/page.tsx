@@ -27,7 +27,10 @@ function formatMessageTime(dateStr: string) {
   return format(date, "dd/MM/yyyy 'lúc' HH:mm");
 }
 
-function getInitial(username?: string | null, fullname?: string | null): string {
+function getInitial(
+  username?: string | null,
+  fullname?: string | null,
+): string {
   if (username) return username.charAt(0).toUpperCase();
   if (fullname) return fullname.charAt(0).toUpperCase();
   return "?";
@@ -106,18 +109,19 @@ export default function ConversationPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const stopTypingNow = useCallback((cId: number) => {
-    if (typingDebounceRef.current) {
-      clearTimeout(typingDebounceRef.current);
-      typingDebounceRef.current = null;
-    }
-    if (isTypingRef.current) {
-      isTypingRef.current = false;
-      emitTypingStop(cId);
-    }
-  }, [emitTypingStop]);
-
-  // Vào phòng và rời phòng chat đồng bộ theo thực thể Socket hiện tại
+  const stopTypingNow = useCallback(
+    (cId: number) => {
+      if (typingDebounceRef.current) {
+        clearTimeout(typingDebounceRef.current);
+        typingDebounceRef.current = null;
+      }
+      if (isTypingRef.current) {
+        isTypingRef.current = false;
+        emitTypingStop(cId);
+      }
+    },
+    [emitTypingStop],
+  );
   useEffect(() => {
     if (convId && socketConnected) {
       joinConversation(convId);
@@ -126,24 +130,32 @@ export default function ConversationPage() {
         stopTypingNow(convId);
       };
     }
-  }, [convId, socketConnected, joinConversation, leaveConversation, stopTypingNow]);
-
-  // Subscribe sự kiện đang nhập... từ đối phương
+  }, [
+    convId,
+    socketConnected,
+    joinConversation,
+    leaveConversation,
+    stopTypingNow,
+  ]);
   useEffect(() => {
     if (!convId || !socketConnected || !user?.id) return;
 
     const offStart = onTyping(convId, (data) => {
       if (data.userId !== user.id) {
         setIsOtherTyping(true);
-        if (typingAutoResetRef.current) clearTimeout(typingAutoResetRef.current);
-        // Tự động tắt trạng thái gõ chữ sau 5s nếu đối phương mất kết nối đột ngột
-        typingAutoResetRef.current = setTimeout(() => setIsOtherTyping(false), 5000);
+        if (typingAutoResetRef.current)
+          clearTimeout(typingAutoResetRef.current);
+        typingAutoResetRef.current = setTimeout(
+          () => setIsOtherTyping(false),
+          5000,
+        );
       }
     });
 
     const offStop = onTypingStop(convId, (data) => {
       if (data.userId !== user.id) {
-        if (typingAutoResetRef.current) clearTimeout(typingAutoResetRef.current);
+        if (typingAutoResetRef.current)
+          clearTimeout(typingAutoResetRef.current);
         setIsOtherTyping(false);
       }
     });
@@ -155,7 +167,6 @@ export default function ConversationPage() {
     };
   }, [convId, socketConnected, user?.id, onTyping, onTypingStop]);
 
-  // Gọi APIs lấy tin nhắn và thông tin phòng bằng React Query
   const {
     data: messagesData,
     isLoading,
@@ -196,12 +207,11 @@ export default function ConversationPage() {
         messagesData?.pages.flatMap((p) => (p.data as Message[]) ?? []) ?? []
       ).reverse();
 
-  // Kiểm soát cuộn màn hình tối ưu
   const isFirstLoadRef = useRef(true);
   useEffect(() => {
     if (allMessages.length > 0 || isOtherTyping) {
       messagesEndRef.current?.scrollIntoView({
-        behavior: isFirstLoadRef.current ? "auto" : "smooth"
+        behavior: isFirstLoadRef.current ? "auto" : "smooth",
       });
       isFirstLoadRef.current = false;
     }
@@ -276,8 +286,12 @@ export default function ConversationPage() {
       setImagePreview(null);
       setReplyTo(null);
 
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CONVERSATIONS });
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MESSAGES(activeConvId) });
+      await queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.CONVERSATIONS,
+      });
+      await queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.MESSAGES(activeConvId),
+      });
 
       if (isVirtual) {
         router.replace(`/messages/${activeConvId}`);
@@ -286,7 +300,6 @@ export default function ConversationPage() {
       toast.error(err?.response?.data?.message || "Failed to send message");
     } finally {
       setSending(false);
-      // Giữ focus cho ô input sau khi gửi xong
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   };
@@ -320,7 +333,6 @@ export default function ConversationPage() {
 
   return (
     <div className="flex flex-col h-full max-h-screen bg-background">
-      {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-background shrink-0">
         <button
           onClick={() => router.push("/messages")}
@@ -331,7 +343,10 @@ export default function ConversationPage() {
         {otherMember?.user && (
           <UserAvatar
             src={otherMember.user.avatarUrl}
-            fallback={getInitial(otherMember.user.username, otherMember.user.fullname)}
+            fallback={getInitial(
+              otherMember.user.username,
+              otherMember.user.fullname,
+            )}
             size="sm"
           />
         )}
@@ -340,17 +355,20 @@ export default function ConversationPage() {
             {getConvName()}
           </p>
           {isOtherTyping ? (
-            <p className="text-xs text-primary animate-pulse font-medium">đang nhập...</p>
+            <p className="text-xs text-primary animate-pulse font-medium">
+              đang nhập...
+            </p>
           ) : (
             otherMember?.user &&
             !currentConv?.isGroup && (
-              <p className="text-xs text-muted-foreground/70">@{otherMember.user.username}</p>
+              <p className="text-xs text-muted-foreground/70">
+                @{otherMember.user.username}
+              </p>
             )
           )}
         </div>
       </div>
 
-      {/* Messages Wrapper */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
         {hasNextPage && !isVirtual && (
           <div className="flex justify-center mb-4">
@@ -372,12 +390,17 @@ export default function ConversationPage() {
             {otherMember?.user && (
               <UserAvatar
                 src={otherMember.user.avatarUrl ?? null}
-                fallback={getInitial(otherMember.user.username, otherMember.user.fullname)}
+                fallback={getInitial(
+                  otherMember.user.username,
+                  otherMember.user.fullname,
+                )}
                 size="xl"
               />
             )}
             <p className="font-semibold text-foreground">{getConvName()}</p>
-            <p className="text-xs text-muted-foreground/70">Start the conversation</p>
+            <p className="text-xs text-muted-foreground/70">
+              Start the conversation
+            </p>
           </div>
         ) : (
           allMessages.map((msg: Message, idx) => {
@@ -393,7 +416,8 @@ export default function ConversationPage() {
 
             const isLastMyMsg = isOwn && msg.id === lastMyMessageId;
             const isSeenMsg = isOwn && msg.id === lastSeenMessageId;
-            const showSent = isLastMyMsg && !isSeenMsg && lastSeenMessageId === null;
+            const showSent =
+              isLastMyMsg && !isSeenMsg && lastSeenMessageId === null;
             const showSeen = isSeenMsg;
 
             return (
@@ -420,7 +444,10 @@ export default function ConversationPage() {
                       {showAvatar && (
                         <UserAvatar
                           src={msg.sender.avatarUrl}
-                          fallback={getInitial(msg.sender.username, msg.sender.fullname)}
+                          fallback={getInitial(
+                            msg.sender.username,
+                            msg.sender.fullname,
+                          )}
                           size="xs"
                         />
                       )}
@@ -443,7 +470,9 @@ export default function ConversationPage() {
                         <span className="font-semibold text-foreground/80">
                           @{msg.replyTo.sender.username}
                         </span>{" "}
-                        <span className="line-clamp-1 break-all">{msg.replyTo.content || "[Hình ảnh]"}</span>
+                        <span className="line-clamp-1 break-all">
+                          {msg.replyTo.content || "[Hình ảnh]"}
+                        </span>
                       </div>
                     )}
 
@@ -473,10 +502,13 @@ export default function ConversationPage() {
                               className="rounded-xl max-w-60 mb-1.5 object-cover max-h-60"
                             />
                           )}
-                          {msg.content && <span className="whitespace-pre-wrap">{msg.content}</span>}
+                          {msg.content && (
+                            <span className="whitespace-pre-wrap">
+                              {msg.content}
+                            </span>
+                          )}
                         </div>
 
-                        {/* Status Message Label */}
                         {isOwn && (showSeen || showSent) && (
                           <div className="flex justify-end mt-1">
                             {showSeen ? (
@@ -490,10 +522,14 @@ export default function ConversationPage() {
                                   size="xs"
                                   className="w-3.5 h-3.5"
                                 />
-                                <span className="text-[10px] text-muted-foreground/60">Đã xem</span>
+                                <span className="text-[10px] text-muted-foreground/60">
+                                  Đã xem
+                                </span>
                               </div>
                             ) : (
-                              <span className="text-[10px] text-muted-foreground/60">Đã gửi</span>
+                              <span className="text-[10px] text-muted-foreground/60">
+                                Đã gửi
+                              </span>
                             )}
                           </div>
                         )}
@@ -526,7 +562,6 @@ export default function ConversationPage() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Reply Container Preview */}
       {replyTo && (
         <div className="flex items-center gap-2 px-4 py-2 bg-muted/60 border-t border-border shrink-0 animate-slide-up">
           <Reply size={14} className="text-muted-foreground shrink-0" />
@@ -547,7 +582,6 @@ export default function ConversationPage() {
         </div>
       )}
 
-      {/* Upload Image Preview */}
       {imagePreview && (
         <div className="flex items-center gap-2 px-4 py-2 bg-muted/60 border-t border-border shrink-0">
           <div className="relative">
@@ -569,7 +603,6 @@ export default function ConversationPage() {
         </div>
       )}
 
-      {/* Footer Chat Input Area */}
       <div className="flex items-center gap-2 px-4 py-3 border-t border-border bg-background shrink-0">
         <button
           onClick={() => fileRef.current?.click()}

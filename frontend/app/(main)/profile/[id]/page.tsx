@@ -47,10 +47,8 @@ export default function ProfilePage() {
 
   const userId = parseInt(id, 10);
   const isOwn = currentUser?.id === userId;
-
-  // Xác định xem tài khoản hiện tại có phải đăng nhập từ Google hay không
-  const isGoogleAccount = 
-    currentUser?.provider === "google" || 
+  const isGoogleAccount =
+    currentUser?.provider === "google" ||
     currentUser?.avatarUrl?.includes("googleusercontent.com");
 
   const { data: profileData, isLoading: profileLoading } = useQuery({
@@ -261,7 +259,6 @@ export default function ProfilePage() {
           <div className="flex items-center gap-2">
             {isOwn ? (
               <>
-                {/* CHỈ hiển thị nút Đổi mật khẩu nếu KHÔNG PHẢI tài khoản đăng nhập bằng Google */}
                 {!isGoogleAccount && (
                   <Button
                     variant="outline"
@@ -274,7 +271,6 @@ export default function ProfilePage() {
                   </Button>
                 )}
 
-                {/* Nút Edit Profile: Luôn hiển thị dù đăng nhập bằng hình thức nào */}
                 <Button
                   variant="outline"
                   size="sm"

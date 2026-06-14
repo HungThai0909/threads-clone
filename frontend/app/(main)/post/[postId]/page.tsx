@@ -174,7 +174,6 @@ export default function PostDetailPage() {
         />
       </div>
 
-      {/* Thanh input bình luận nhanh ở bottom */}
       <div className="sticky bottom-0 bg-background z-10 flex items-center gap-3 px-4 py-3 border-t border-b border-border">
         {!_hasHydrated ? (
           <div className="h-8 w-8 rounded-full bg-muted animate-pulse shrink-0" />

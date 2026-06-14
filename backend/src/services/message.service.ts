@@ -230,9 +230,8 @@ export const messageService = {
       ]);
 
       if (io) {
-        // ĐỒNG BỘ: Đảm bảo chuyển conversationId qua String cho tên Room Socket hoạt động chính xác
         emitToConversation(io, String(conversationId), "message:seen_all", {
-          conversationId: Number(conversationId), // Ép kiểu về number phục vụ client logic
+          conversationId: Number(conversationId), 
           userId,
           readAt: new Date(),
         });
@@ -285,7 +284,6 @@ export const messageService = {
       }
     }
 
-    // Tiến hành lưu tin nhắn vào Database
     const message = await prisma.message.create({
       data: {
         conversationId,
@@ -297,23 +295,17 @@ export const messageService = {
       select: msgSelect,
     });
 
-    // Cập nhật lại thời gian hoạt động mới nhất của cuộc hội thoại
     await prisma.conversation.update({
       where: { id: conversationId },
       data: { updatedAt: new Date() },
     });
 
     if (io) {
-      // ĐÃ SỬA: Đảm bảo ép kiểu dữ liệu properties bên trong payload đồng bộ dạng Number cho Client
       const realtimeMessagePayload = {
         ...message,
         conversationId: Number(conversationId),
       };
-
-      // 1. Phát sự kiện tới toàn bộ thành viên đang ở trong phòng chat
       emitToConversation(io, String(conversationId), "message:new", realtimeMessagePayload);
-
-      // 2. Tìm danh sách tất cả các thành viên khác để đẩy cập nhật trạng thái tin nhắn mới lên thanh Sidebar
       const members = await prisma.conversationMember.findMany({
         where: { conversationId, userId: { not: senderId } },
         select: { userId: true },
@@ -321,7 +313,7 @@ export const messageService = {
 
       members.forEach(({ userId }) => {
         emitToUser(io, String(userId), "conversation:update", {
-          conversationId: Number(conversationId), // Ép kiểu thống nhất với Client
+          conversationId: Number(conversationId), 
           lastMessage: {
             id: message.id,
             content: message.content,
@@ -382,7 +374,7 @@ export const messageService = {
         "message:seen",
         {
           messageId,
-          conversationId: Number(targetMessage.conversationId), // Bổ sung thông tin định danh đồng bộ cho Client
+          conversationId: Number(targetMessage.conversationId), 
           userId,
           readAt: new Date(),
         },

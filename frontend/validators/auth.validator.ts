@@ -58,7 +58,6 @@ export const resetPasswordSchema = z
     path: ["confirmPassword"],
   });
 
-// Cập nhật changePasswordSchema đồng bộ với Backend
 export const changePasswordSchema = z
   .object({
     currentPassword: z.string().min(1, "Vui lòng nhập mật khẩu hiện tại."),
@@ -88,7 +87,9 @@ export const googleLoginSchema = z.object({
 export type RegisterFormData = z.infer<typeof registerSchema>;
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
-export type ResendVerificationFormData = z.infer<typeof resendVerificationSchema>;
+export type ResendVerificationFormData = z.infer<
+  typeof resendVerificationSchema
+>;
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
 export type GoogleLoginFormData = z.infer<typeof googleLoginSchema>;

@@ -60,7 +60,6 @@ export default function FeedPage() {
 
   return (
     <div className="pt-4">
-      {/* Sửa viền border-border và chữ text-foreground */}
       <div className="flex items-center justify-between px-4 pb-4 border-b border-border">
         <h1 className="text-xl font-bold text-foreground">Threads</h1>
         {!isLoading && (
@@ -74,13 +73,14 @@ export default function FeedPage() {
         )}
       </div>
 
-      {/* Sửa khối tạo bài viết: bg-muted/30 và màu chữ gợi ý text-muted-foreground */}
       <button
         onClick={() => setCreatePostOpen(true)}
         className="flex items-center gap-3 w-full px-4 py-4 border-b border-border hover:bg-muted/30 transition-colors text-left"
       >
         <UserAvatar src={user?.avatarUrl} fallback={userFallback} size="md" />
-        <span className="text-muted-foreground text-sm flex-1">Bạn đang nghĩ gì?</span>
+        <span className="text-muted-foreground text-sm flex-1">
+          Bạn đang nghĩ gì?
+        </span>
         <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground bg-muted border border-border rounded-xl px-3 py-1.5 cursor-pointer">
           <PenSquare size={13} /> Đăng
         </div>
@@ -90,7 +90,9 @@ export default function FeedPage() {
         <PostListSkeleton count={6} />
       ) : error ? (
         <div className="text-center py-16 space-y-3">
-          <p className="text-muted-foreground text-sm">Không tải được bài viết.</p>
+          <p className="text-muted-foreground text-sm">
+            Không tải được bài viết.
+          </p>
           <button
             onClick={() => refetch()}
             className="text-xs text-foreground underline hover:no-underline"

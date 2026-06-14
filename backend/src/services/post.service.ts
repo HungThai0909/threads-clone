@@ -392,7 +392,6 @@ export const postService = {
       data: { repostsCount: { increment: 1 } },
     });
 
-    // CẬP NHẬT ĐOẠN NÀY: Thêm `include` đầy đủ dữ liệu trả về
     return tx.post.create({
       data: {
         userId,
@@ -406,7 +405,7 @@ export const postService = {
         quotePost: {
           include: { 
             author: { select: authorSelect }, 
-            images: { orderBy: { imageOrder: "asc" } } // Lấy cả ảnh bài viết gốc
+            images: { orderBy: { imageOrder: "asc" } } 
           },
         },
       },

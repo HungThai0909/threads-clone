@@ -101,7 +101,7 @@ export const messageController = {
         (req as any).user!.id,
         conversationId,
         payload,
-        (req as any).io, // Đảm bảo io object được truyền chuẩn xác vào đây
+        (req as any).io, 
       );
 
       res

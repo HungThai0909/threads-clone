@@ -18,19 +18,17 @@ export function initSocket(httpServer: HttpServer) {
     },
   });
 
-  // ─── ĐÃ SỬA: Cập nhật Middleware để check TokenExpiredError không bị crash ───
   io.use((socket, next) => {
     const token =
       (socket.handshake.auth.token as string) ||
       socket.handshake.auth.token ||
       socket.handshake.headers.authorization?.split(" ")[1];
 
-    if (!token) return next(new Error("Authentication error: No token provided"));
+    if (!token)
+      return next(new Error("Authentication error: No token provided"));
 
-    // Gọi hàm từ jwtService đã được nâng cấp
     const result = jwtService.verifyAccessToken(token);
 
-    // Kiểm tra cấu trúc trả về mới từ jwtService
     if ("valid" in result) {
       if (result.expired) {
         return next(new Error("Authentication error: Token expired"));
@@ -38,7 +36,6 @@ export function initSocket(httpServer: HttpServer) {
       return next(new Error("Authentication error: Invalid token"));
     }
 
-    // Nếu không lọt vào block "valid" nghĩa là token hợp lệ và result chính là TokenPayload
     (socket as AuthSocket).userId = result.userId;
     next();
   });
@@ -59,31 +56,31 @@ export function initSocket(httpServer: HttpServer) {
       await socket.join(`user:${userId}`);
       io.emit("user:online", { userId });
     } catch (err) {
-      console.error(`Failed to update online presence for user ${userId}:`, err);
+      console.error(
+        `Failed to update online presence for user ${userId}:`,
+        err,
+      );
     }
 
-    // ─── Conversation room ───────────────────────────────────────────────────
-
-    // ĐÃ SỬA: Chấp nhận cả data dạng số trực tiếp từ client truyền qua
     socket.on("conversation:join", (data: any) => {
-      const conversationId = typeof data === "object" ? data?.conversationId : data;
+      const conversationId =
+        typeof data === "object" ? data?.conversationId : data;
       if (conversationId) {
         void socket.join(`conversation:${conversationId}`);
       }
     });
 
     socket.on("conversation:leave", (data: any) => {
-      const conversationId = typeof data === "object" ? data?.conversationId : data;
+      const conversationId =
+        typeof data === "object" ? data?.conversationId : data;
       if (conversationId) {
         void socket.leave(`conversation:${conversationId}`);
       }
     });
 
-    // ─── Typing indicators ───────────────────────────────────────────────────
-
-    // ĐÃ SỬA: Trích xuất chuẩn xác conversationId khi Client truyền dạng number trực tiếp
     socket.on("typing:start", (data: any) => {
-      const conversationId = typeof data === "object" ? data?.conversationId : data;
+      const conversationId =
+        typeof data === "object" ? data?.conversationId : data;
       if (conversationId) {
         socket
           .to(`conversation:${conversationId}`)
@@ -92,15 +89,14 @@ export function initSocket(httpServer: HttpServer) {
     });
 
     socket.on("typing:stop", (data: any) => {
-      const conversationId = typeof data === "object" ? data?.conversationId : data;
+      const conversationId =
+        typeof data === "object" ? data?.conversationId : data;
       if (conversationId) {
         socket
           .to(`conversation:${conversationId}`)
           .emit("typing:stop", { userId, conversationId });
       }
     });
-
-    // ─── Disconnect ──────────────────────────────────────────────────────────
 
     socket.on("disconnect", async () => {
       const userSockets = onlineUsers.get(userId);

@@ -23,7 +23,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider
       attribute="class"
-      defaultTheme="dark" // Giao diện mặc định khi vào trang lần đầu là Tối
+      defaultTheme="dark" 
       enableSystem
       disableTransitionOnChange
     >

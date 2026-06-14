@@ -473,7 +473,6 @@ export function PostCard({
           )
         )}
 
-        {/* Khối hiển thị ảnh của chính bài viết (Nếu có) */}
         {!isEditing && post.images && post.images.length > 0 && (
           <div
             className={cn(
@@ -493,7 +492,6 @@ export function PostCard({
           </div>
         )}
 
-        {/* Khối hiển thị Bài viết được chia sẻ lại (Quote/Repost) - Đã cập nhật render hình ảnh */}
         {!isEditing && post.quotePost && (
           <div
             className="border border-border rounded-xl p-3 mb-3 bg-muted/40 hover:bg-muted/80 transition-colors cursor-pointer"
@@ -518,12 +516,13 @@ export function PostCard({
               </p>
             )}
 
-            {/* ĐÃ THÊM: Hiển thị hình ảnh từ bài viết gốc được Repost / Trích dẫn */}
             {post.quotePost.images && post.quotePost.images.length > 0 && (
               <div
                 className={cn(
                   "grid gap-1.5 mt-2 rounded-lg overflow-hidden",
-                  post.quotePost.images.length === 1 ? "grid-cols-1" : "grid-cols-2",
+                  post.quotePost.images.length === 1
+                    ? "grid-cols-1"
+                    : "grid-cols-2",
                 )}
               >
                 {post.quotePost.images.map((img) => (
@@ -540,7 +539,6 @@ export function PostCard({
           </div>
         )}
 
-        {/* Thanh tương tác Actions */}
         {!isEditing && !confirmDelete && (
           <div className="flex items-center gap-1 -ml-1.5 mt-1">
             <button
@@ -576,7 +574,6 @@ export function PostCard({
               {post.commentsCount > 0 && <span>{post.commentsCount}</span>}
             </button>
 
-            {/* Nút Repost: Đã tối ưu hóa lưu cache đầy đủ ảnh gốc */}
             <button
               onClick={async (e) => {
                 e.stopPropagation();
@@ -613,7 +610,7 @@ export function PostCard({
                       repostsCount: 0,
                       isLiked: false,
                       author: user,
-                      quotePost: { ...post }, // Ép cache nhận đủ images bài viết gốc
+                      quotePost: { ...post },
                     }) as Post;
 
                     return {

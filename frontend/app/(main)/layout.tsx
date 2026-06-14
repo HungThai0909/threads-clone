@@ -25,8 +25,8 @@ import { useSocket } from "@/hooks/use-socket";
 import { useQuery } from "@tanstack/react-query";
 import { messageService } from "@/services/index";
 import { QUERY_KEYS } from "@/constants";
-import { ThemeToggle } from "@/components/theme-toggle"; // <-- Import nút chuyển theme PC
-import { useTheme } from "next-themes"; // <-- Để xử lý theme nhanh ở mobile
+import { ThemeToggle } from "@/components/theme-toggle";
+import { useTheme } from "next-themes";
 
 const navItems = [
   { href: "/feed", icon: Home, label: "Home" },
@@ -112,7 +112,6 @@ export default function MainLayout({
     <div className="flex min-h-screen bg-background text-foreground">
       <SocketInit />
 
-      {/* SIDEBAR - MÁY TÍNH */}
       <aside className="hidden md:flex flex-col fixed left-0 top-0 h-full w-18 xl:w-60 border-r border-border bg-background px-3 py-6 z-40">
         <Link href="/feed" className="flex items-center gap-3 px-2 mb-8">
           <div className="w-9 h-9 rounded-xl bg-foreground text-background flex items-center justify-center shrink-0">
@@ -176,7 +175,6 @@ export default function MainLayout({
         </nav>
 
         <div className="flex flex-col gap-1 pt-4 border-t border-border">
-          {/* NÚT ĐỔI THEME PC */}
           <ThemeToggle />
 
           <Link
@@ -209,7 +207,6 @@ export default function MainLayout({
         </div>
       </aside>
 
-      {/* VÙNG CHỨA NỘI DUNG CHÍNH */}
       <main className="flex-1 md:ml-18 xl:ml-60 min-h-screen">
         {isMessagesPage ? (
           <div className="h-screen overflow-hidden">{children}</div>
@@ -225,7 +222,6 @@ export default function MainLayout({
         )}
       </main>
 
-      {/* NAVIGATION BAR - MOBILE */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border flex items-center justify-around px-2 py-2 z-40">
         {navItems.map(({ href, icon: Icon }) => {
           const isActive = pathname === href;
@@ -262,7 +258,6 @@ export default function MainLayout({
           <PenSquare size={26} strokeWidth={2} />
         </button>
 
-        {/* NÚT ĐỔI THEME NHANH TRÊN MOBILE */}
         <button
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
           className="flex flex-col items-center p-2 text-xl cursor-pointer"
