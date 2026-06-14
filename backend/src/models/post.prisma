@@ -1,0 +1,142 @@
+model Post {
+  id           Int           @id @default(autoincrement())
+  userId       Int           @map("user_id")
+  quotePostId  Int?          @map("quote_post_id") 
+  type         String        @default("post") @db.VarChar(20) 
+  content      String?       @db.Text
+  visibility   String        @default("public") @db.VarChar(20)
+  likesCount   Int           @default(0) @map("likes_count")
+  commentsCount Int          @default(0) @map("comments_count") 
+  repostsCount Int           @default(0) @map("reposts_count")
+  quotesCount  Int           @default(0) @map("quotes_count")
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+ updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz()
+  deletedAt    DateTime?     @map("deleted_at") @db.Timestamptz()
+  author       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quotePost    Post?         @relation("PostQuotes", fields: [quotePostId], references: [id])
+  quotes       Post[]        @relation("PostQuotes")
+  images       PostImage[]
+  comments     PostComment[]
+  likes        PostLike[]
+  hashtags     PostHashtag[]
+  notifications Notification[]
+
+  @@index([userId])
+  @@index([deletedAt])
+  @@index([type, createdAt])
+  @@index([userId, createdAt])
+  @@map("posts")
+}
+
+model PostComment {
+  id           Int            @id @default(autoincrement())
+  postId       Int            @map("post_id")
+  userId       Int            @map("user_id")
+  content      String         @db.Text
+  repliesCount Int            @default(0) @map("replies_count") 
+  likesCount   Int            @default(0) @map("likes_count")
+  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime       @updatedAt @map("updated_at") @db.Timestamptz()
+  deletedAt    DateTime?      @map("deleted_at") @db.Timestamptz()
+
+  post         Post           @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  replies      CommentReply[] 
+  likes        CommentLike[]
+  
+  @@index([postId])
+  @@index([userId])
+  @@index([deletedAt])
+  @@map("post_comments")
+}
+
+model CommentReply {
+  id        Int         @id @default(autoincrement())
+  commentId Int         @map("comment_id") 
+  userId    Int         @map("user_id")   
+  content   String      @db.Text           
+  likesCount Int        @default(0) @map("likes_count")
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime    @updatedAt @map("updated_at") @db.Timestamptz()
+  deletedAt DateTime?   @map("deleted_at") @db.Timestamptz()
+
+  comment   PostComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  author    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  likes     ReplyLike[]
+  
+  @@index([commentId])
+  @@index([userId])
+  @@index([deletedAt])
+  @@map("comment_replies")
+}
+
+model CommentLike {
+  userId    Int         @map("user_id")
+  commentId Int         @map("comment_id")
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz()
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment   PostComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@id([userId, commentId])
+  @@index([userId])
+  @@index([commentId])
+  @@map("comment_likes")
+}
+
+model ReplyLike {
+  userId    Int          @map("user_id")
+  replyId   Int          @map("reply_id")
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz()
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reply     CommentReply @relation(fields: [replyId], references: [id], onDelete: Cascade)
+
+  @@id([userId, replyId])
+  @@index([userId])
+  @@index([replyId])
+  @@map("reply_likes")
+}
+
+model PostImage {
+  id         Int      @id @default(autoincrement())
+  postId     Int      @map("post_id")
+  imageUrl   String   @map("image_url") @db.Text
+  imageOrder Int      @default(0) @map("image_order")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  @@index([postId])
+  @@map("post_images")
+}
+
+model PostLike {
+  userId    Int      @map("user_id")
+  postId    Int      @map("post_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  @@id([userId, postId])
+  @@index([userId])
+  @@index([postId])
+  @@map("post_likes")
+}
+
+model Hashtag {
+  id         Int           @id @default(autoincrement())
+  name       String        @unique @db.VarChar(100)
+  postsCount Int           @default(0) @map("posts_count")
+  createdAt  DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+  posts      PostHashtag[]
+  @@index([name])
+  @@map("hashtags")
+}
+
+model PostHashtag {
+  postId    Int      @map("post_id")
+  hashtagId Int      @map("hashtag_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  hashtag   Hashtag  @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+  @@id([postId, hashtagId])
+  @@index([postId])
+  @@index([hashtagId])
+  @@map("post_hashtags")
+}

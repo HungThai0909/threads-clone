@@ -1,0 +1,30 @@
+name: threads_db
+
+services:
+  postgres_db:
+    image: postgres:17
+    container_name: f8_postgres_17
+    environment:
+      POSTGRES_USER: f8
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: db_auth
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_db:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    container_name: f8_redis
+    command: redis-server --appendonly yes # Bật chế độ lưu dữ liệu từ RAM xuống ổ đĩa chống mất dữ liệu
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6380:6379" # Máy thật kết nối qua cổng 6380
+    restart: always
+
+volumes:
+  postgres_db:
+  redis_data:

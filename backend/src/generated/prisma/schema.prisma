@@ -1,0 +1,402 @@
+model Notification {
+  id         Int      @id @default(autoincrement())
+  senderId   Int      @map("sender_id")
+  receiverId Int      @map("receiver_id")
+  postId     Int?     @map("post_id")
+  type       String   @db.VarChar(20)
+  metadata   Json?    @db.JsonB
+  isRead     Boolean  @default(false) @map("is_read")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  sender     User     @relation("NotifSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver   User     @relation("NotifReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  post       Post?    @relation(fields: [postId], references: [id], onDelete: SetNull)
+
+  @@index([senderId])
+  @@index([postId])
+  @@index([receiverId, isRead])
+  @@index([receiverId, isRead, createdAt])
+  @@map("notifications")
+}
+
+model Conversation {
+  id               Int                  @id @default(autoincrement())
+  createdBy        Int                  @map("created_by")
+  name             String?              @db.VarChar(100)
+  avatarUrl        String?              @map("avatar_url") @db.Text
+  isGroup          Boolean              @default(false) @map("is_group")
+  uniqueTwowayHash String?              @unique @map("unique_twoway_hash") @db.VarChar(32)
+  createdAt        DateTime             @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime             @updatedAt @map("updated_at") @db.Timestamptz()
+  creator          User                 @relation("ConversationCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  members          ConversationMember[]
+  messages         Message[]
+
+  @@map("conversations")
+}
+
+model ConversationMember {
+  conversationId Int          @map("conversation_id")
+  userId         Int          @map("user_id")
+  role           String       @default("member") @db.VarChar(20)
+  lastReadAt     DateTime?    @map("last_read_at") @db.Timestamptz()
+  joinedAt       DateTime     @default(now()) @map("joined_at") @db.Timestamptz()
+  hiddenAt       DateTime?    @map("hidden_at") @db.Timestamptz()
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([conversationId, userId])
+  @@index([conversationId])
+  @@index([userId, hiddenAt])
+  @@map("conversation_members")
+}
+
+model Message {
+  id               Int           @id @default(autoincrement())
+  conversationId   Int           @map("conversation_id")
+  senderId         Int           @map("sender_id")
+  replyToMessageId Int?          @map("reply_to_message_id")
+  content          String?       @db.Text
+  imageUrl         String?       @map("image_url") @db.Text
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime      @updatedAt @map("updated_at") @db.Timestamptz()
+  deletedAt        DateTime?     @map("deleted_at") @db.Timestamptz()
+  conversation     Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender           User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  replyTo          Message?      @relation("MsgReplies", fields: [replyToMessageId], references: [id])
+  replies          Message[]     @relation("MsgReplies")
+  reads            MessageRead[]
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@map("messages")
+}
+
+model MessageRead {
+  messageId Int      @map("message_id")
+  userId    Int      @map("user_id")
+  readAt    DateTime @default(now()) @map("read_at") @db.Timestamptz()
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([messageId, userId])
+  @@index([messageId])
+  @@index([userId])
+  @@map("message_reads")
+}
+
+model Post {
+  id            Int            @id @default(autoincrement())
+  userId        Int            @map("user_id")
+  quotePostId   Int?           @map("quote_post_id")
+  type          String         @default("post") @db.VarChar(20)
+  content       String?        @db.Text
+  visibility    String         @default("public") @db.VarChar(20)
+  likesCount    Int            @default(0) @map("likes_count")
+  commentsCount Int            @default(0) @map("comments_count")
+  repostsCount  Int            @default(0) @map("reposts_count")
+  quotesCount   Int            @default(0) @map("quotes_count")
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz()
+  deletedAt     DateTime?      @map("deleted_at") @db.Timestamptz()
+  author        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quotePost     Post?          @relation("PostQuotes", fields: [quotePostId], references: [id])
+  quotes        Post[]         @relation("PostQuotes")
+  images        PostImage[]
+  comments      PostComment[]
+  likes         PostLike[]
+  hashtags      PostHashtag[]
+  notifications Notification[]
+
+  @@index([userId])
+  @@index([deletedAt])
+  @@index([type, createdAt])
+  @@index([userId, createdAt])
+  @@map("posts")
+}
+
+model PostComment {
+  id           Int       @id @default(autoincrement())
+  postId       Int       @map("post_id")
+  userId       Int       @map("user_id")
+  content      String    @db.Text
+  repliesCount Int       @default(0) @map("replies_count")
+  likesCount   Int       @default(0) @map("likes_count")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz()
+
+  post    Post           @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  replies CommentReply[]
+  likes   CommentLike[]
+
+  @@index([postId])
+  @@index([userId])
+  @@index([deletedAt])
+  @@map("post_comments")
+}
+
+model CommentReply {
+  id         Int       @id @default(autoincrement())
+  commentId  Int       @map("comment_id")
+  userId     Int       @map("user_id")
+  content    String    @db.Text
+  likesCount Int       @default(0) @map("likes_count")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz()
+
+  comment PostComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  author  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  likes   ReplyLike[]
+
+  @@index([commentId])
+  @@index([userId])
+  @@index([deletedAt])
+  @@map("comment_replies")
+}
+
+model CommentLike {
+  userId    Int         @map("user_id")
+  commentId Int         @map("comment_id")
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz()
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment   PostComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@id([userId, commentId])
+  @@index([userId])
+  @@index([commentId])
+  @@map("comment_likes")
+}
+
+model ReplyLike {
+  userId    Int          @map("user_id")
+  replyId   Int          @map("reply_id")
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz()
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reply     CommentReply @relation(fields: [replyId], references: [id], onDelete: Cascade)
+
+  @@id([userId, replyId])
+  @@index([userId])
+  @@index([replyId])
+  @@map("reply_likes")
+}
+
+model PostImage {
+  id         Int      @id @default(autoincrement())
+  postId     Int      @map("post_id")
+  imageUrl   String   @map("image_url") @db.Text
+  imageOrder Int      @default(0) @map("image_order")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@map("post_images")
+}
+
+model PostLike {
+  userId    Int      @map("user_id")
+  postId    Int      @map("post_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId])
+  @@index([userId])
+  @@index([postId])
+  @@map("post_likes")
+}
+
+model Hashtag {
+  id         Int           @id @default(autoincrement())
+  name       String        @unique @db.VarChar(100)
+  postsCount Int           @default(0) @map("posts_count")
+  createdAt  DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+  posts      PostHashtag[]
+
+  @@index([name])
+  @@map("hashtags")
+}
+
+model PostHashtag {
+  postId    Int      @map("post_id")
+  hashtagId Int      @map("hashtag_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  hashtag   Hashtag  @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, hashtagId])
+  @@index([postId])
+  @@index([hashtagId])
+  @@map("post_hashtags")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                   Int                  @id @default(autoincrement())
+  username             String               @unique @db.VarChar(50)
+  email                String               @unique @db.VarChar(255)
+  password             String?              @db.VarChar(255)
+  fullname             String?              @db.VarChar(100)
+  bio                  String?              @db.VarChar(160)
+  avatarUrl            String?              @map("avatar_url") @db.Text
+  coverUrl             String?              @map("cover_url") @db.Text
+  isVerified           Boolean              @default(false) @map("is_verified")
+  isEmailVerified      Boolean              @default(false) @map("is_email_verified")
+  createdAt            DateTime             @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt            DateTime             @updatedAt @map("updated_at") @db.Timestamptz()
+  deletedAt            DateTime?            @map("deleted_at") @db.Timestamptz()
+  oauthAccounts        OAuthAccount[]
+  emailVerifications   EmailVerification[]
+  passwordResets       PasswordReset[]
+  refreshTokens        RefreshToken[]
+  posts                Post[]
+  postComments         PostComment[]
+  commentReplies       CommentReply[]
+  postLikes            PostLike[]
+  followers            Follow[]             @relation("Following")
+  following            Follow[]             @relation("Follower")
+  blockedBy            UserBlock[]          @relation("Blocked")
+  blocking             UserBlock[]          @relation("Blocker")
+  notificationsSent    Notification[]       @relation("NotifSender")
+  notificationsRecv    Notification[]       @relation("NotifReceiver")
+  conversationsCreated Conversation[]       @relation("ConversationCreator")
+  conversationMembers  ConversationMember[]
+  messages             Message[]
+  messageReads         MessageRead[]
+  presence             UserPresence?
+  commentLikes         CommentLike[]
+  replyLikes           ReplyLike[]
+  searchHistoryRecords SearchHistory[]      @relation("UserSearchOwner")
+  searchedByRecords    SearchHistory[]      @relation("UserSearchTarget")
+
+  @@index([username])
+  @@index([email])
+  @@index([deletedAt])
+  @@index([isVerified, deletedAt])
+  @@map("users")
+}
+
+model OAuthAccount {
+  id             Int      @id @default(autoincrement())
+  userId         Int      @map("user_id")
+  provider       String   @default("google") @db.VarChar(20)
+  providerUserId String   @map("provider_user_id") @db.VarChar(255)
+  providerEmail  String?  @map("provider_email") @db.VarChar(255)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+  @@index([userId])
+  @@map("oauth_accounts")
+}
+
+model EmailVerification {
+  id         Int       @id @default(autoincrement())
+  userId     Int       @map("user_id")
+  token      String    @unique @db.Text
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz()
+  verifiedAt DateTime? @map("verified_at") @db.Timestamptz()
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("email_verifications")
+}
+
+model PasswordReset {
+  id         Int       @id @default(autoincrement())
+  userId     Int       @map("user_id")
+  token      String    @unique @db.Text
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz()
+  usedAt     DateTime? @map("used_at") @db.Timestamptz()
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isVerified Boolean   @default(false) @map("is_verified")
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("password_resets")
+}
+
+model RefreshToken {
+  id         Int       @id @default(autoincrement())
+  userId     Int       @map("user_id")
+  token      String    @unique @db.Text
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz()
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz()
+  deviceInfo String?   @map("device_info") @db.VarChar(255)
+  ipAddress  String?   @map("ip_address") @db.VarChar(45)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("refresh_tokens")
+}
+
+model Follow {
+  followerId  Int      @map("follower_id")
+  followingId Int      @map("following_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+  @@map("follows")
+}
+
+model UserBlock {
+  blockerId Int      @map("blocker_id")
+  blockedId Int      @map("blocked_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  blocker   User     @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked   User     @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@id([blockerId, blockedId])
+  @@index([blockerId])
+  @@index([blockedId])
+  @@map("user_blocks")
+}
+
+model UserPresence {
+  userId     Int       @id @map("user_id")
+  isOnline   Boolean   @default(false) @map("is_online")
+  lastSeenAt DateTime? @map("last_seen_at") @db.Timestamptz()
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_presence")
+}
+
+model SearchHistory {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  targetId  Int      @map("target_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  user   User @relation("UserSearchOwner", fields: [userId], references: [id], onDelete: Cascade)
+  target User @relation("UserSearchTarget", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, targetId])
+  @@index([userId])
+  @@index([userId, createdAt])
+  @@map("search_histories")
+}

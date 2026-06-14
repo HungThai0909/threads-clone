@@ -1,0 +1,83 @@
+  model Notification {
+    id         Int      @id @default(autoincrement())
+    senderId   Int      @map("sender_id")
+    receiverId Int      @map("receiver_id")
+    postId     Int?     @map("post_id")
+    type       String   @db.VarChar(20) 
+    metadata   Json?    @db.JsonB
+    isRead     Boolean  @default(false) @map("is_read")
+    createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()
+    sender     User     @relation("NotifSender", fields: [senderId], references: [id], onDelete: Cascade)
+    receiver   User     @relation("NotifReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+    post       Post?    @relation(fields: [postId], references: [id], onDelete: SetNull)
+    @@index([senderId])
+    @@index([postId])
+    @@index([receiverId, isRead])
+    @@index([receiverId, isRead, createdAt])
+    @@map("notifications")
+  }
+
+ model Conversation {
+  id               Int                  @id @default(autoincrement())
+  createdBy        Int                  @map("created_by")
+  name             String?              @db.VarChar(100)
+  avatarUrl        String?              @map("avatar_url") @db.Text
+  isGroup          Boolean              @default(false) @map("is_group")
+  uniqueTwowayHash String?              @unique @map("unique_twoway_hash") @db.VarChar(32)
+  createdAt        DateTime             @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime             @updatedAt @map("updated_at") @db.Timestamptz()
+  creator          User                 @relation("ConversationCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  members          ConversationMember[]
+  messages         Message[]
+  
+  @@map("conversations")
+}
+
+  model ConversationMember {
+    conversationId Int          @map("conversation_id")
+    userId         Int          @map("user_id")
+    role           String       @default("member") @db.VarChar(20)
+    lastReadAt     DateTime?    @map("last_read_at") @db.Timestamptz()
+    joinedAt       DateTime     @default(now()) @map("joined_at") @db.Timestamptz()
+    hiddenAt       DateTime?    @map("hidden_at") @db.Timestamptz()
+    conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+    user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+    @@id([conversationId, userId])
+    @@index([conversationId])
+    @@index([userId, hiddenAt])
+    @@map("conversation_members")
+  }
+
+  model Message {
+    id                  Int           @id @default(autoincrement())
+    conversationId      Int           @map("conversation_id")
+    senderId            Int           @map("sender_id")
+    replyToMessageId    Int?          @map("reply_to_message_id")
+    content             String?       @db.Text
+    imageUrl            String?       @map("image_url") @db.Text
+    createdAt           DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+    updatedAt           DateTime      @updatedAt @map("updated_at") @db.Timestamptz()
+    deletedAt           DateTime?     @map("deleted_at") @db.Timestamptz()
+    conversation        Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+    sender              User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
+    replyTo             Message?      @relation("MsgReplies", fields: [replyToMessageId], references: [id])
+    replies             Message[]     @relation("MsgReplies")
+    reads               MessageRead[]
+    @@index([conversationId])
+    @@index([senderId])
+    @@index([createdAt])
+    @@index([deletedAt])
+    @@map("messages")
+  }
+
+  model MessageRead {
+    messageId Int      @map("message_id")
+    userId    Int      @map("user_id")
+    readAt    DateTime @default(now()) @map("read_at") @db.Timestamptz()
+    message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    @@id([messageId, userId])
+    @@index([messageId])
+    @@index([userId])
+    @@map("message_reads")
+  }
