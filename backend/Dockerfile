@@ -78,4 +78,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 
 # Chạy migration rồi start server
 # Dùng sh -c để chạy nhiều lệnh
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/app.js"]
+CMD ["node", "dist/app.js"]
