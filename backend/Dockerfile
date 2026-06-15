@@ -2,10 +2,11 @@
 # Stage 1: Builder
 # Cài dependencies và biên dịch TypeScript sang JavaScript
 # ============================================================
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
-# Cài đặt các gói hệ thống cần thiết (openssl cho Prisma)
-RUN apk add --no-cache openssl libc6-compat
+# Cập nhật và cài đặt các gói hệ thống cần thiết (openssl cho Prisma)
+# Lệnh apk upgrade giúp vá sạch các lỗ hổng bảo mật cấp hệ điều hành (OS Vulnerabilities)
+RUN apk update && apk upgrade --no-cache && apk add --no-cache openssl libc6-compat
 
 WORKDIR /app
 
@@ -20,7 +21,6 @@ RUN npm ci
 COPY src/models ./src/models/
 
 # [QUAN TRỌNG] Khởi tạo Prisma Client từ cấu hình nhiều file schema
-# Phiên bản Prisma mới hỗ trợ đọc thư mục schema bằng cờ --schema
 RUN npx prisma generate --schema=./src/models/
 
 # Copy toàn bộ source code còn lại
@@ -35,9 +35,10 @@ RUN npm run build
 # Chỉ giữ những gì cần thiết để chạy, bỏ devDependencies
 # => Image nhỏ hơn, bảo mật hơn
 # ============================================================
-FROM node:20-alpine AS production
+FROM node:22-alpine AS production
 
-RUN apk add --no-cache openssl libc6-compat
+# Tiếp tục cập nhật bản vá bảo mật cho môi trường chạy thật (Production Run)
+RUN apk update && apk upgrade --no-cache && apk add --no-cache openssl libc6-compat
 
 # Tạo user không phải root để chạy app (security best practice)
 RUN addgroup -g 1001 -S nodejs && \
@@ -48,7 +49,7 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Chỉ cài production dependencies nhằm tối ưu dung lượng image
+# Chỉ cài production dependencies nhằm tối ưu dung lượng và loại bỏ thư viện lỗi bảo mật ở devDependencies
 RUN npm ci --only=production && npm cache clean --force
 
 # Copy cấu trúc thư mục models (chứa các file schema) và generated client từ builder
