@@ -8,7 +8,7 @@
     "dev": "ts-node src/app.ts",
     "build": "npm run lint && npx tsc",
     "start": "node dist/app.js",
-    "lint": "eslint ./src/**"
+    "lint": "ESLINT_USE_FLAT_CONFIG=true eslint ./src/** --config eslint.config.mts"
   },
   "keywords": [],
   "author": "",

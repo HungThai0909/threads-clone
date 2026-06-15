@@ -14,7 +14,7 @@ COPY package*.json ./
 COPY tsconfig.json ./
 
 # [BỔ SUNG QUAN TRỌNG]: Copy file cấu hình ESLint vào Docker để lệnh lint không bị gãy
-COPY eslint.config.js ./
+COPY eslint.config.mts ./
 
 # Cài đặt TẤT CẢ dependencies (bao gồm devDependencies cho build và lint)
 RUN npm ci
