@@ -5,7 +5,6 @@
 FROM node:22-alpine AS builder
 
 # Cập nhật và cài đặt các gói hệ thống cần thiết (openssl cho Prisma)
-# Lệnh apk upgrade giúp vá sạch các lỗ hổng bảo mật cấp hệ điều hành (OS Vulnerabilities)
 RUN apk update && apk upgrade --no-cache && apk add --no-cache openssl libc6-compat
 
 WORKDIR /app
@@ -17,14 +16,12 @@ COPY tsconfig.json ./
 # Cài đặt TẤT CẢ dependencies (bao gồm devDependencies cho build)
 RUN npm ci
 
-# Copy toàn bộ thư mục chứa các file prisma nhỏ (.prisma) vào Docker trước
-COPY src/models ./src/models/
-
-# [QUAN TRỌNG] Khởi tạo Prisma Client từ cấu hình nhiều file schema
-RUN npx prisma generate --schema=./src/models/
-
-# Copy toàn bộ source code còn lại
+# [SỬA LỖI EXIT CODE 2]: Copy TOÀN BỘ source code vào trước (bao gồm cả src/models)
+# Việc này đảm bảo thư mục src/models không bị ghi đè hay xóa mất sau khi generate Prisma
 COPY src ./src
+
+# [QUAN TRỌNG] Khởi tạo Prisma Client từ cấu hình nhiều file schema nằm trong src/models
+RUN npx prisma generate --schema=./src/models/
 
 # Biên dịch TypeScript sang JavaScript
 RUN npm run build
@@ -37,7 +34,7 @@ RUN npm run build
 # ============================================================
 FROM node:22-alpine AS production
 
-# Tiếp tục cập nhật bản vá bảo mật cho môi trường chạy thật (Production Run)
+# Cập nhật bản vá bảo mật cho môi trường chạy thật (Production Run)
 RUN apk update && apk upgrade --no-cache && apk add --no-cache openssl libc6-compat
 
 # Tạo user không phải root để chạy app (security best practice)
